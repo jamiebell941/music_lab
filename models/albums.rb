@@ -15,12 +15,9 @@ attr_accessor :title, :genre
   end
 
   def save()
-      db = PG.connect ({dbname:'music', host:'localhost'})
       sql = "INSERT INTO albums (title, genre, artist_id) VALUES ($1, $2, $3) RETURNING id"
       values = [@title, @genre, @artist_id]
-      db.prepare("save", sql)
-      result = db.exec_prepared("save", values)
-      db.close
+      result = SqlRunner.run(sql, values)
       @id = result[0]['id'].to_i
     end
 
@@ -31,6 +28,24 @@ attr_accessor :title, :genre
       return musician.map {|artist| Artist.new(artist)}
       end
 
+      def update()
+        sql = "UPDATE albums SET (title, genre) = ($1, $2) WHERE id = $3"
+        values = [@title, @genre, @id]
+        SqlRunner.run(sql, values)
+      end
+
+      def delete()
+        sql = "DELETE FROM albums WHERE id = $1"
+        values = [@id]
+        SqlRunner.run(sql, values)
+      end
+
+      def self.find(id)
+        sql = "SELECT * FROM albums WHERE id = $1"
+        values = [id]
+        result = SqlRunner.run(sql, values)
+        return result.map { |album| Album.new(album)}
+      end
 
     def self.all()
       sql = "SELECT * FROM albums"
